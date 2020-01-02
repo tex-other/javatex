@@ -17,5 +17,4 @@ But a review there (by HeikoTheissen, dated 2017-01-27) says:
 > Fixed an error that prevented hyphenation  
 > Enlarged javaTEX.memoryword.maxHalfword= 1073741823 and built a `big' TEX with memmax = 10000000
 
-
-
+Looking at the files, it appears that the author performed an automatic translation from the WEB sources into `initex.java` and `virtex.java` (and other files, all in the `jtex-java` directory), using the files in the `jtex-src` directory. Would be useful to study.
