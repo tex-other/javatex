@@ -1,0 +1,241 @@
+
+javaTeX -- a Java implementation of TeX
+
+Timothy Murphy
+<tim@maths.tcd.ie>
+
+"What is this life, if full of care,
+We have no time to stand and stare?"
+
+		W.H. Davies ("Supertramp")
+
+There are three ways of consuming javaTeX.
+In increasing order of difficulty these are:
+
+	(A) You can just run the classes in jtex.jar .
+
+	(B) You can compile the Java files in jtex-java.tar.gz .
+
+	(C) You can create the Java files from tex.web
+	    with the material in jtex.tar.gz .
+
+These options are described more fully below.
+
+A. To run javaTeX
+
+(1) Unpack jtex.jar ;
+
+	jar xf jtex.jar
+
+This will create a number of class files
+in the subdirectory javaTeX ,
+as well as a file "properties" in the current directory.
+
+(2) Edit the file "properties"
+to give the appropriate definition of TEXMF for your system.
+
+(3) Run the command
+
+	java javaTeX.texhash
+
+This will create a file "tex.hash".
+
+(This step is unnecessary
+if you have a file TEXMF/ls-R,
+as produced eg by web2c/teTeX ;
+javaTeX can use this file in place of "tex.hash".)
+
+(4) Create format files by
+
+	java javaTeX.initex plain
+	* \dump
+	java javaTeX.initex latex.ltx
+
+(5) Now you should be able to process the LaTeX file foo.tex by
+
+	java javaTeX.latex foo
+
+Notes:
+
+i) All the javaTeX classes are in the "javaTeX" package,
+and must therefore be placed in a subdirectory "javaTeX"
+under the CLASSPATH, eg in the subdirectory javaTeX 
+assuming '.' is in your CLASSPATH.
+
+ii) You can have more than one TEXMF tree, eg
+
+	TEXMF=/usr/local/lib/texmf:/common/TeX/texmf
+
+(where ":" should be replaced on non-Unix systems
+by the appropriate path.separator).
+
+(iii) If you have created "tex.hash" you can move this
+to the first directory on the TEXMF path if you prefer.
+Or you can specify where it is in your properties file,
+by a line like
+
+	TEXHASH=/home/tim/Java/tex.hash
+
+iv) You can move the file "properties" to
+user.home/.javaTeX/properties or java.home/javaTeX.properties ,
+if you prefer, where user.home is your home directory 
+and java.home is the top of the Java library tree.
+
+(v) Note that this is a 'small' TeX,
+with each 'memoryword' taking up 4 bytes.
+This means that mem_max is restricted to 64k.
+This is sufficient to create latex.fmt
+and to process reasonably straightforward LaTeX files.
+
+(If you want to create a 'big' TeX,
+with each 'memoryword' taking up 8 bytes,
+you will find the necessary code in the sources,
+as described in (C) below.
+In effect the only change required is to
+the definition of 'memoryword' in TeXLib.w .)
+
+(vi) Although these notes are written from a Unix perspective,
+javaTeX should work on other platforms.
+(I have tried it very briefly under NT.)
+
+(vii) Unpacking jtex.jar will also create 1-line Unix shell-scripts
+"initex", "tex", "latex" and "texhash"
+in the Unix subdirectory.
+These are not required, but may be found useful.
+
+As provided these scripts use the "tya" JIT Java compiler.
+Simply remove the switch "-Djava.compiler=tya"
+if you don't have, or don't want to use, TYA.
+
+If you want to use these, transfer them to the current directory.
+Then you can say eg
+
+	./texhash
+	./initex latex.ltx 
+	./latex foo
+
+(No doubt those living under Microsoft can substitute similar .bat files.)
+
+
+B. To compile javaTeX
+
+(1) The Java files for javaTeX can be unpacked by
+
+	tar xzvf jtex-java.tar.gz .
+
+(2) Create a subdirectory "javaTeX".
+
+(3) There is some circularity in the Java code
+(eg initex.java requires the memoryword class,
+which in turn requires the twohalves class,
+which is provided by initex.java).
+This means that some files have to be compiled twice,
+with warnings or errors on the first compilation.
+
+The following commands (in this order) should suffice:
+
+	jikes -d . TeXFile.java
+	jikes -d . alpha*.java byte*.java word*.java
+	jikes -d . memoryword.java	[expect errors]
+	jikes -d . initex.java		[expect errors]
+	jikes -d . initex.java
+	jikes -d . memoryword.java
+	jikes -d . virtex.java
+	jikes -d . texhash.java
+
+(4) Now proceed as in (A) above.
+
+Note:
+
+(i) I have used the IBM Java compiler "jikes"
+which is available (free) for a number of platforms.
+Change "jikes" to "javac" or "guavac" if you prefer.
+(Doubtless any Java compiler will do.)
+
+
+C. Creating the Java files
+
+(1) The sources for javaTeX are in the three files
+tex.jch, TeXLib.w and TeXFile.w .
+To process these two tools are needed:
+web2java and cweb+j .
+
+If you untar jtex.tar.gz by
+
+	tar xzvf jtex.tar.gz
+
+all the requisite files will be created,
+including two subdirectories "web2java" and "cweb".
+
+(2) Go into the subdirectory "web2java" and say "make".
+Hopefully this will create the executable "web2java".
+
+(3) Go into the subdirectory "cweb".
+This will contain the three files
+{comm,ctang,cweav}-java.ch .
+You will need the sources of the Knuth/Levy cweb-3.4 ,
+as found in
+
+	$CTAN/web/c_cpp/cweb/{*.w,*.c,*.h,*.tex,Makefile}
+
+where eg CTAN=ftp://ftp.tex.ac.uk/tex-archive .
+
+Assuming these sources are in the subdirectory web2c,
+edit the Makefile to set
+
+	CCHANGES=comm-java.ch
+	TCHANGES=ctang-java.ch
+	WCHANGES=cweav-java.ch
+
+(or "mv Makefile.jtex Makefile").
+Now say "make"; hopefully this will create 
+"ctangle" and "cweave".
+
+(4) Return to the main directory, and copy or create a link to tex.web , eg
+
+	ln -s /src/teTeX/texk/web2c/tex.web .
+
+[Substitute the location of tex.web on your system.]
+
+(5) Say
+
+	make jtex-src
+
+This should make all the required Java files,
+including initex.java and virtex.java .
+
+(6) Now proceed as in (B), 
+compiling the Java files and passing to (A).
+
+Notes:
+
+(i) The compilation as described above assumes the use of Unix,
+with gcc, GNU make, bison and flex.
+However, even if created under Unix.
+the Java class files should in principle work on any system.
+
+(ii) Change "jikes" to "javac" or "guavac" in the Makefile if you prefer.
+
+(iii) If you want to create the documentation
+TeXFile.tex and TeXLib.tex , say eg
+
+	cweave +j TeXFile.w
+
+You will need the cweb-LaTeX style files,
+which can be found at 
+
+	$CTAN/macros/latex/supported/cweb
+
+
+D. Comments and suggestions
+
+Any suggestions for speeding up javaTeX,
+or indeed any other improvement,
+will be gratefully received.
+Please post them to me at tim@maths.tcd.ie .
+
+There is a semi-moribund majordomo mailing list.
+To subscribe, email majordomo@maths.tcd.ie
+with the message "subscribe javatex".
+
+
